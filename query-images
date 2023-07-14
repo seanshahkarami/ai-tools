@@ -4,10 +4,10 @@ This tool accepts a query prompt and uses ViLT to generate answers to the prompt
 
 The intended usage is to combine this with tools like find and xargs as follows:
 find ~/path/to/images -name '*.jpg' | xargs ./query-images -q 'Are there any animals?'
-/Users/sean/git/path/to/images/0001.jpg no
-/Users/sean/git/path/to/images/0002.jpg no
-/Users/sean/git/path/to/images/0003.jpg yes
-/Users/sean/git/path/to/images/0004.jpg no
+/Users/sean/path/to/images/0001.jpg no
+/Users/sean/path/to/images/0002.jpg no
+/Users/sean/path/to/images/0003.jpg yes
+/Users/sean/path/to/images/0004.jpg no
 
 And of course, is you have sufficient resources, you can parallelize this by using something like:
 find ~/path/to/images -name '*.jpg' | xargs -P4 -n50 ./query-images -q 'Are there any animals?'
