@@ -1,0 +1,44 @@
+#!/usr/bin/env python3
+"""
+This tool accepts a query prompt and uses ViLT to generate answers to the prompt.
+
+The intended usage is to combine this with tools like find and xargs as follows:
+find ~/path/to/images -name '*.jpg' | xargs ./query-images -q 'Are there any animals?'
+/Users/sean/git/path/to/images/0001.jpg no
+/Users/sean/git/path/to/images/0002.jpg no
+/Users/sean/git/path/to/images/0003.jpg yes
+/Users/sean/git/path/to/images/0004.jpg no
+
+And of course, is you have sufficient resources, you can parallelize this by using something like:
+find ~/path/to/images -name '*.jpg' | xargs -P4 -n50 ./query-images -q 'Are there any animals?'
+"""
+import argparse
+from transformers import ViltProcessor, ViltForQuestionAnswering
+import torch
+from PIL import Image
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-q", "--query", required=True, help="query to run on inputs")
+    parser.add_argument("filenames", nargs="*", help="query to run on inputs")
+    args = parser.parse_args()
+
+    processor = ViltProcessor.from_pretrained("dandelin/vilt-b32-finetuned-vqa")
+    model = ViltForQuestionAnswering.from_pretrained("dandelin/vilt-b32-finetuned-vqa")
+
+    for filename in args.filenames:
+        with Image.open(filename) as image:
+            with torch.no_grad():
+                # prepare inputs
+                encoding = processor(image, args.query, return_tensors="pt")
+                # forward pass
+                outputs = model(**encoding)
+                logits = outputs.logits
+                idx = logits.argmax(-1).item()
+                response = model.config.id2label[idx]
+                print(filename, response, flush=True)
+
+
+if __name__ == "__main__":
+    main()
