@@ -27,17 +27,19 @@ def main():
     processor = ViltProcessor.from_pretrained("dandelin/vilt-b32-finetuned-vqa")
     model = ViltForQuestionAnswering.from_pretrained("dandelin/vilt-b32-finetuned-vqa")
 
+    def query_image(image):
+        with torch.no_grad():
+            # prepare inputs
+            encoding = processor(image, args.query, return_tensors="pt")
+            # forward pass
+            outputs = model(**encoding)
+            logits = outputs.logits
+            idx = logits.argmax(-1).item()
+            return model.config.id2label[idx]
+
     for filename in args.filenames:
         with Image.open(filename) as image:
-            with torch.no_grad():
-                # prepare inputs
-                encoding = processor(image, args.query, return_tensors="pt")
-                # forward pass
-                outputs = model(**encoding)
-                logits = outputs.logits
-                idx = logits.argmax(-1).item()
-                response = model.config.id2label[idx]
-                print(filename, response, flush=True)
+            print(filename, query_image(image), flush=True)
 
 
 if __name__ == "__main__":
